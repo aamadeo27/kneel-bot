@@ -1,0 +1,26 @@
+{
+  "name": "bot",
+  "version": "1.0.0-Donal",
+  "description": "Kneel Bot",
+  "main": "index.js",
+  "scripts": {
+    "start:bot": "babel-node index.js",
+    "start": "nodemon --watch ./ai --watch ./api --watch ./redux --delay 100ms --exec npm run start:bot"
+  },
+  "keywords": [
+    "bot",
+    "kneel",
+    "mmorpg"
+  ],
+  "author": "aamadeo",
+  "license": "ISC",
+  "dependencies": {
+    "clear": "0.0.1",
+    "logger-winston": "0.0.8",
+    "redux": "^3.6.0",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1"
+  }
+}

@@ -1,0 +1,221 @@
+const {combineReducers} = require('redux')
+const config = require('../config')
+const { 
+	LOGGED_IN,
+	LOGGED_OUT,
+	UPDATE_PARAMS,
+	UPDATE_VILLAGE,
+	REFRESH,
+	PREPARE,
+	NEW_ORDER,
+	REMOVE_ORDER,
+	UPDATE_TASKS,
+	UPDATE_MISSIONS,
+	UPDATE_DIPLOMACY,
+	SAVE_FOR,
+	ADD_TARGETS,
+	EXTEND_DISCOVER,
+	GATHER_TROOPS
+} = require('./actions').constants
+
+const user = ( state = '', { type, payload} ) => {
+	if ( type === LOGGED_IN ){
+		return payload.user
+	}
+
+	if ( type === LOGGED_OUT ){
+		return ''
+	}
+	
+	return state
+}
+
+const location = ( state = '', { type, payload} ) => {
+	if ( type === LOGGED_IN ){
+		return payload.location
+	}
+
+	if ( type === LOGGED_OUT ){
+		return ''
+	}
+	
+	return state
+}
+
+const loggedIn = (state = false, { type } ) => {
+	if ( type === LOGGED_IN ){
+		return true
+	}
+
+	if ( type === LOGGED_OUT ){
+		return false
+	}
+	
+	return state
+}
+
+const village = (state = {}, { type, payload}) => {
+	if ( type === UPDATE_VILLAGE ){
+		return Object.assign({}, payload.village)
+	}
+
+	if ( type === LOGGED_OUT ){
+		return {}
+	}
+	
+	return state
+}
+
+const params = (state = {}, { type, payload }) => {
+	if ( type === UPDATE_PARAMS ){
+		return Object.assign({}, payload.params)
+	}
+	
+	if ( type === LOGGED_OUT ){
+		return {}
+	}
+
+	return state
+}
+
+const lastAction = (state = "", { type }) => {
+	return type
+}
+
+const orders = (state = [], { type, payload }) => {
+	switch( type ){
+		case NEW_ORDER: return [...state, payload.order]
+		case REMOVE_ORDER:
+			return state.filter( e => e.id !== payload.order.id )
+	}
+	
+	return state
+}
+
+const executingOrder = (state = false, { type }) => {
+	if ( type === REMOVE_ORDER ){
+		return false
+	}
+	
+	return state || type === NEW_ORDER
+}
+
+const tasks = (state = [], { type, payload}) => {
+	if ( type === UPDATE_TASKS ){
+		return payload.tasks
+	}
+	
+	if ( type === LOGGED_OUT ){
+		return []
+	}
+
+	return state
+}
+
+const missions = (state = [], { type, payload}) => {
+	if ( type === UPDATE_MISSIONS ){
+		return payload.missions
+	}
+	
+	if ( type === LOGGED_OUT ){
+		return []
+	}
+
+	return state
+}
+
+const saveFor = (state = '', { type, payload }) => {
+	if( type === SAVE_FOR ) return payload.item
+	
+	return state
+}
+
+const cells = (state = [], { payload, type}) => {
+	if ( type === LOGGED_OUT ){
+		return []
+	}
+
+	if ( type == "UPDATE_MAP" ){
+		return [...payload.cells]
+	}
+
+	if ( type == 'UPDATE_SECTION' ){
+		const setCells = new Set()
+		const center = centerOfSection(payload.point, payload.radius)
+
+		const filteredCells = state.filter( cell => {
+			if ( withinSection(center, cell, payload.radius) ) return false
+			setCells.add(`${cell.x}:${cell.y}`)
+
+			return true
+		})
+
+		const newState = [...filteredCells]
+		
+		action.cells.forEach( cell => {
+			if (setCells.has(`${cell.x}:${cell.y}`)) return
+			newState.push(cell)
+		})
+
+		return newState
+	}
+
+	return state
+}
+
+const diplomacy = (state = {}, { type, payload }) => {
+	if ( type === LOGGED_OUT ){
+		return {}
+	}
+
+	if ( type === UPDATE_DIPLOMACY ){
+		return payload.diplomacy
+	}
+	
+	return state
+}
+
+const targets = (state = [], { type, payload }) => {
+	if ( type === LOGGED_OUT )	return []
+	if ( type !== ADD_TARGETS ) return state
+	
+	const knownTargets = new Set()
+	state.forEach( t => knownTargets.add(t.type+":"+t.id) )
+	
+	const unknownTargets = payload.targets.filter( t => 
+		! knownTargets.has(t.type+":"+t.id)
+	)
+	
+	return [ ...state, ...unknownTargets]
+}
+
+const discoverRadius = (state = config.minDiscoverRadius, { type }) => {
+	if ( type === EXTEND_DISCOVER ) return state + 1
+	
+	return state
+}
+
+const gatherTroops = (state = 0, { type, payload }) => {
+	if ( type === GATHER_TROOPS ) return payload.troops
+	
+	return state
+}
+
+module.exports = combineReducers({
+	user,
+	discoverRadius,
+	location,
+	loggedIn,
+	params,
+	targets,
+	diplomacy,
+	village,
+	orders,
+	executingOrder,
+	saveFor,
+	tasks,
+	missions,
+	cells,
+	lastAction,
+	gatherTroops
+})

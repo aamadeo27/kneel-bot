@@ -1,0 +1,5 @@
+[
+    {"description":"Server Disconnection Support","completed":true},
+    {"description":"Web-Interface","completed":false},
+    {"description":"ReloadConfig","completed":false}
+]

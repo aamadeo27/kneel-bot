@@ -1,0 +1,19 @@
+{
+  "log": {
+    "default": {
+      "file": {
+        "filename": "bot.log",  
+        "level": "debug",
+        "timestamp": true
+      }
+    },
+    "error": {
+      "file": {
+        "filename": "bot.error.log",
+        "level": "debug",
+        "colorize": true,
+        "timestamp": true
+      }
+    }
+  }
+}
