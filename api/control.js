@@ -38,6 +38,8 @@ module.exports = {
 
 			body = JSON.parse(body)
 			
+			
+			console.log("Calling callback")
 			callback()
 		})
 	},

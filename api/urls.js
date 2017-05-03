@@ -1,33 +1,36 @@
+const { server } = require('../config')
+
+
 module.exports = {
-	Params: `https://api.dev.localhost/v2/users/params`,
+	Params: `${server}/v2/users/params`,
 	/*Village*/
-	Village:`https://api.dev.localhost/v2/villages`,
-	villageTroops:`https://api.dev.localhost/v2/villages/troops`,
-	moveWorker: `https://api.dev.localhost/v2/villages/moveWorker`,
-	research: `https://api.dev.localhost/v2/villages/research`,
-	upgradeOccupation: `https://api.dev.localhost/v2/villages/upgradeOccupation`,
-	spawn: `https://api.dev.localhost/v2/villages/spawn`,
-	spawnArmy: `https://api.dev.localhost/v2/villages/spawnArmy`,
-	build: `https://api.dev.localhost/v2/villages/build`,
-	upgradeBuilding: `https://api.dev.localhost/v2/villages/upgrade`,
-	trade:  `https://api.dev.localhost/v2/villages/sell`,
-	tech: `https://api.dev.localhost/v2/villages/tech`,
+	Village:`${server}/v2/villages`,
+	villageTroops:`${server}/v2/villages/troops`,
+	moveWorker: `${server}/v2/villages/moveWorker`,
+	research: `${server}/v2/villages/research`,
+	upgradeOccupation: `${server}/v2/villages/upgradeOccupation`,
+	spawn: `${server}/v2/villages/spawn`,
+	spawnArmy: `${server}/v2/villages/spawnArmy`,
+	build: `${server}/v2/villages/build`,
+	upgradeBuilding: `${server}/v2/villages/upgrade`,
+	trade:  `${server}/v2/villages/sell`,
+	tech: `${server}/v2/villages/tech`,
 	/*Map*/
-	Map: `https://api.dev.localhost/v2/cells/`,
+	Map: `${server}/v2/cells/`,
 	/*Mission*/
-	Missions: `https://api.dev.localhost/v2/missions/`,
-	reports: `https://api.dev.localhost/v2/missions/reports`,
-	toggleLoop: `https://api.dev.localhost/v2/missions/toggleLoop`,
-	abort: `https://api.dev.localhost/v2/missions/abort`,
+	Missions: `${server}/v2/missions/`,
+	reports: `${server}/v2/missions/reports`,
+	toggleLoop: `${server}/v2/missions/toggleLoop`,
+	abort: `${server}/v2/missions/abort`,
 	/*Tasks*/
-	Tasks:  `https://api.dev.localhost/v2/tasks`,
+	Tasks:  `${server}/v2/tasks`,
 	/*Auth*/
-	login: `https://api.dev.localhost/v2/users/login`,
-	logout: `https://api.dev.localhost/v2/users/logout`,
-	freeUser: `https://api.dev.localhost/v2/users/free`,
-	users: `https://api.dev.localhost/v2/users/`,
+	login: `${server}/v2/users/login`,
+	logout: `${server}/v2/users/logout`,
+	freeUser: `${server}/v2/users/free`,
+	users: `${server}/v2/users/`,
 	/*Diplomacy*/
-	surrender: `https://api.dev.localhost/v2/diplomacy/surrender`,
-	Diplomacy: `https://api.dev.localhost/v2/diplomacy`,
-	troopsCalling: `https://api.dev.localhost/v2/diplomacy/troopsCalling`
+	surrender: `${server}/v2/diplomacy/surrender`,
+	Diplomacy: `${server}/v2/diplomacy`,
+	troopsCalling: `${server}/v2/diplomacy/troopsCalling`
 }

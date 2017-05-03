@@ -1,7 +1,8 @@
 module.exports = {
+	server: 'https://s1.aamadeo.me',
 	login: {
-		user: 'u1', 
-		pass: 'u'
+		user: 'bot-ofi', 
+		pass: 'negrogarca'
 	},
 	minDiscoverRadius: 0,
 	maxDiscoverRadius: 5,
