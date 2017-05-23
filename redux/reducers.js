@@ -1,5 +1,4 @@
 const {combineReducers} = require('redux')
-const config = require('../config')
 const { 
 	LOGGED_IN,
 	LOGGED_OUT,
@@ -15,28 +14,17 @@ const {
 	SAVE_FOR,
 	ADD_TARGETS,
 	EXTEND_DISCOVER,
-	GATHER_TROOPS
+	GATHER_TROOPS,
+	UPDATE_CONFIG
 } = require('./actions').constants
 
-const user = ( state = '', { type, payload} ) => {
+const userInfo = ( state = {}, { type, payload} ) => {
 	if ( type === LOGGED_IN ){
-		return payload.user
+		return payload.userInfo
 	}
 
 	if ( type === LOGGED_OUT ){
-		return ''
-	}
-	
-	return state
-}
-
-const location = ( state = '', { type, payload} ) => {
-	if ( type === LOGGED_IN ){
-		return payload.location
-	}
-
-	if ( type === LOGGED_OUT ){
-		return ''
+		return {}
 	}
 	
 	return state
@@ -189,7 +177,7 @@ const targets = (state = [], { type, payload }) => {
 	return [ ...state, ...unknownTargets]
 }
 
-const discoverRadius = (state = config.minDiscoverRadius, { type }) => {
+const discoverRadius = (state = 0, { type }) => {
 	if ( type === EXTEND_DISCOVER ) return state + 1
 	
 	return state
@@ -201,10 +189,18 @@ const gatherTroops = (state = 0, { type, payload }) => {
 	return state
 }
 
+const config = ( state = {}, { type, payload }) => {
+	switch(type){
+	case UPDATE_CONFIG: 
+			return payload.config
+	default:
+			return state
+	}
+}
+
 module.exports = combineReducers({
-	user,
+	userInfo,
 	discoverRadius,
-	location,
 	loggedIn,
 	params,
 	targets,
@@ -217,5 +213,6 @@ module.exports = combineReducers({
 	missions,
 	cells,
 	lastAction,
-	gatherTroops
+	gatherTroops,
+	config
 })

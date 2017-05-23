@@ -15,8 +15,12 @@
   "author": "aamadeo",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.17.2",
     "clear": "0.0.1",
+    "compression": "^1.6.2",
+    "express": "^4.15.3",
     "logger-winston": "0.0.8",
+    "path": "^0.12.7",
     "redux": "^3.6.0",
     "request": "^2.81.0"
   },

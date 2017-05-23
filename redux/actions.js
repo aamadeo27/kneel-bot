@@ -13,15 +13,16 @@ const constants = {
 	ADD_TARGETS: 'ADD_TARGETS',
 	SAVE_FOR: 'SAVE_FOR',
 	EXTEND_DISCOVER: 'EXTEND_DISCOVER',
-	GATHER_TROOPS: 'GATHER_TROOPS'
+	GATHER_TROOPS: 'GATHER_TROOPS',
+	UPDATE_CONFIG: 'UPDATE_CONFIG'
 }
 
 module.exports = {
 	constants,
 	
-	loggedIn: (user, location) => ({ 
+	loggedIn: (userInfo) => ({ 
 		type: constants.LOGGED_IN, 
-		payload: { user, location } 
+		payload: { userInfo } 
 	}),
 
 	loggedOut: () => ({ 
@@ -87,5 +88,12 @@ module.exports = {
 	gatherTroops: troops => ({
 		type: constants.GATHER_TROOPS,
 		payload: { troops }
-	})
+	}),
+	
+	updateConfig: config => ({
+		type: constants.UPDATE_CONFIG,
+		payload: { config }
+	}),
+	
+	
 }

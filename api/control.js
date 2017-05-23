@@ -21,7 +21,7 @@ module.exports = {
 			if ( ! body.authenticated ){
 				return console.log("Error al intentar el login", body)
 			} else {
-				store.dispatch(actions.loggedIn(body.user, body.location))
+				store.dispatch(actions.loggedIn(body))
 			}
 		})
 	},
@@ -38,13 +38,12 @@ module.exports = {
 
 			body = JSON.parse(body)
 			
-			
 			console.log("Calling callback")
 			callback()
 		})
 	},
 	
-	spawn(unit, slot, jar, callback){
+	spawn(store, unit, slot, jar, callback){
 		const reqData = { 
 			url: urls.spawn,
 			jar,
@@ -64,7 +63,7 @@ module.exports = {
 		})
 	},
 	
-	build(jar, spec, callback){
+	build(store, jar, spec, callback){
 		
 		const reqData = { url: urls.build, form: spec, jar }
 		
@@ -78,7 +77,7 @@ module.exports = {
 		})
 	},
 	
-	upgradeBuilding(jar, spec, callback){
+	upgradeBuilding(store, jar, spec, callback){
 		const reqData = { url: urls.upgradeBuilding, form: spec, jar }
 		
 		request.post( reqData, (err, response, body) => {
@@ -91,7 +90,7 @@ module.exports = {
 		})
 	},
 	
-	trade(spec, jar, callback){
+	trade(store, spec, jar, callback){
 		const reqData = { 
 			url: urls.trade, 
 			jar,
@@ -109,7 +108,7 @@ module.exports = {
 		})
 	},
 	
-	attack(mission, store, jar, callback){
+	attack(store, mission, jar, callback){
 
 		const reqData = { 
 			url: urls.Missions, 

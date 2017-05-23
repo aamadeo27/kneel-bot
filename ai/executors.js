@@ -35,7 +35,7 @@ module.exports = {
 		
 		for( let i = 0; i < order.count ; i++ ){
 			let cb = (i == order.count-1) ? callback : nullCB
-			spawn(order.unit, order.slot, jar, cb)
+			spawn(store, order.unit, order.slot, jar, cb)
 		}
 	},
 	
@@ -65,7 +65,7 @@ module.exports = {
 		const buildCB = () => {
 			store.dispatch(actions.saveFor(''))
 			console.log("Building?")
-			build(jar, order.building, removeOrderCB)
+			build(store, jar, order.building, removeOrderCB)
 		}
 		
 		moveWorker(store, jar, target.resource, workers, buildCB)
@@ -75,7 +75,7 @@ module.exports = {
 		console.log("Trading", order.trade)
 		
 		const callback = () => store.dispatch(actions.removeOrder(order))
-		trade(order.trade, jar, callback)
+		trade(store, order.trade, jar, callback)
 	},
 	
 	saveFor(order, store){
@@ -91,7 +91,7 @@ module.exports = {
 			store.dispatch(actions.extendDiscover())
 		}
 		
-		attack(order.mission, store, jar, callback)
+		attack(store, order.mission, jar, callback)
 	},
 	
 	upgradeBuilding(order, store, jar){
@@ -125,7 +125,7 @@ module.exports = {
 		
 		const buildCB = () => {
 			store.dispatch(actions.saveFor(''))
-			upgradeBuilding(jar, order.spec, removeOrderCB)
+			upgradeBuilding(store, jar, order.spec, removeOrderCB)
 		}
 		
 		moveWorker(store, jar, target.resource, workers, buildCB)

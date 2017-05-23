@@ -33,9 +33,11 @@ module.exports = {
 	
 	discoverMap(store, jar){
 		const {
-			location : {x, y},
+			userInfo,
 			discoverRadius
 		} = store.getState()
+		
+		const { location : {x, y} } = userInfo
 		
 		const dR = Math.min( 
 			(discoverRadius||config.minDiscoverRadius), 
@@ -57,7 +59,6 @@ module.exports = {
 
 						body = JSON.parse(body)
 
-						//console.log("DiscoverResponse", body)
 						store.dispatch(actions.updateMap(body))
 					})
 			}

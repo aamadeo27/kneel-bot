@@ -39,46 +39,47 @@ const analyze ={
 			return idleToWork()
 	},
 	
-	attack({ village, params, missions, targets, location, gatherTroops }){
+	attack({ village, params, missions, targets, userInfo, gatherTroops, config }){
 		console.log("--> Attack ?")
 		
-		const {minTroops} = config
+		const { minAttack, minDefense } = config
+		const { location } = userInfo
 		
 		if ( ! missions ) return
 		if ( ! targets ) return 
+		
+		let available = troopsInVillage(village, params.profiles, 'infantry')
+		let allTroops = available + troopsInMissions(missions, params.profiles)
+		
+		available = available - parseInt(minDefense * allTroops, 10)
+		available = available - gatherTroops
+		
+		if ( available < minAttack ) return
 		
 		missions = missions.map( m => {
 			const missionTarget = m.objective.action == 'return' ? m.origin : m.objective
 			return missionTarget.id
 		})
 		
-		const troops = troopsInVillage(village, params.profiles, 'infantry') - gatherTroops
-		
-		if ( troops < minTroops ) return
-		
 		const attackedTarget = target => missions.find( m => m === target.id)
-		const posibleTargets = targets.filter( t => ! attackedTarget(t))
+		const possibleTargets = targets.filter( t => ! attackedTarget(t))
 		
-		if ( posibleTargets.length === 0 ) return
+		if ( possibleTargets.length === 0 ) return
 		
-		const target = posibleTargets[0]
+		const target = possibleTargets[0]
 		
 		let mission = undefined
-		const extendDiscover = posibleTargets.length === 1
+		const extendDiscover = possibleTargets.length === 1
+		
+		console.log("PossibleTargets: ", possibleTargets.length)
 		
 		let count =  Math.max(
-			minTroops, 
-			parseInt(troops/(posibleTargets.length))
+			minAttack, 
+			parseInt(available/(possibleTargets.length))
 		)
 
-		console.log({
-			troops,
-			PTL: posibleTargets.length,
-			minTroops
-		})
-
-		if ( troops - count < minTroops){
-			count = troops
+		if ( available - count < minAttack){
+			count = available
 		}
 
 		mission = {
@@ -96,7 +97,7 @@ const analyze ={
 		return attack(mission, extendDiscover)
 	},
 
-	barn({ village, tasks, missions, params, saveFor }){
+	barn({ village, tasks, missions, params, saveFor, config }){
 		console.log("--> Barn ?")
 		if ( ! tasks ) return
 		
@@ -113,10 +114,10 @@ const analyze ={
 		const { rps, capacity } = village.resources.food
 		let timeLeft = capacity / (rps + looting)
 		
-		console.log("Lph: " + Math.round(looting * 3600))
 		// Less than 5hs to go from empty to full
 		console.log({ r: 'food', timeLeft: Math.round(timeLeft/60) + 'mins' })
-		if ( timeLeft > 5 * HOUR ) return
+		
+		if ( timeLeft > config.barnFillTime ) return
 		
 		let cost = params.costs.Barn
 		const upgrade = hasBuilding(village.buildings, 'Barn')
@@ -151,7 +152,7 @@ const analyze ={
 		return build({ name: 'Barn', slot })
 	},
 	
-	warehouse({ village, missions, params, tasks, saveFor }){
+	warehouse({ village, missions, params, tasks, saveFor, config }){
 		console.log("--> Warehouse ?")
 		
 		if ( ! tasks ) return
@@ -177,7 +178,7 @@ const analyze ={
 
 			// Less than 5hs to go from empty to full
 			console.log({ r, timeLeft: Math.round(timeLeft/60) + 'mins', looting })
-			if ( timeLeft > 5 * HOUR ) continue
+			if ( timeLeft > config.warehouseFillTime ) continue
 			
 			if ( upgrade ){
 				slot = slotOf(village.buildings, 'Warehouse')
@@ -291,7 +292,7 @@ const analyze ={
 		return build({ name: 'Barracks', slot, builders: 6 })
 	},
 	
-	troop({ village, params, missions, saveFor }){
+	troop({ village, params, missions, saveFor, config }){
 		console.log("--> Troop ?")
 		
 		if ( ! params ) return
@@ -305,7 +306,7 @@ const analyze ={
 		const troops = troopsInVillage(village, params.profiles) +
 									 troopsInMissions(missions, params.profiles)
 		
-		if ( troops / peasants > 10 ) return
+		if ( troops / peasants > config.troopsPerPeasant ) return
 		
 		const cost = params.costs.infantry
 		
@@ -328,7 +329,7 @@ const analyze ={
 		return spawn('infantry', slot, count)
 	},
 	
-	peasant({ village, params, missions, saveFor }){
+	peasant({ village, params, missions, saveFor, config }){
 		console.log("--> Peasant ?")
 		if ( saveFor && saveFor !== 'Peasant' ) return
 		
@@ -336,7 +337,12 @@ const analyze ={
 		const troops = troopsInVillage(village, params.profiles) +
 									 troopsInMissions(missions, params.profiles)
 		
-		if ( troops / peasants < 10 ) return
+		console.log({
+			troops,
+			peasants,
+			tpp: config.troopsPerPeasant
+		})
+		if ( troops / peasants < config.troopsPerPeasant ) return
 		
 		
 		const cost = params.costs.peasant

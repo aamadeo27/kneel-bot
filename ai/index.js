@@ -2,7 +2,6 @@ const clear = require('clear')
 
 const { login } = require('../api/control')
 const logger = require('../logger')
-const config = require('../config')
 const info = require('../api/info')
 const actions = require('../redux/actions')
 const { 
@@ -55,26 +54,26 @@ const mapAnalyzer = (store) => {
 		c.raidable
 	)
 
-	logger.log('MapAnalysis')
+	//logger.log('MapAnalysis')
 
 	store.dispatch(actions.addTargets(enemies))
 	
 }
 
 const mapDiscovery = (store, jar) => {
-	const interval = 10 * 1000
+	const { intervals } = store.getState().config
 	
 	if ( store.getState().loggedIn ) {
 		info.discoverMap(store, jar)
 	}
 
-	setTimeout(() => mapDiscovery(store, jar), interval)
+	setTimeout(() => mapDiscovery(store, jar), intervals.discovery)
 }
 
 const update = (store, jar) => {
-	const interval = 10 * 1000
 	const { 
-		loggedIn, 
+		loggedIn,
+		config
 	} = store.getState()
 	
 	if ( loggedIn ){
@@ -98,17 +97,15 @@ const update = (store, jar) => {
 		login(store, jar)
 	}
 	
-	setTimeout(() => update(store, jar), interval)
+	setTimeout(() => update(store, jar), config.intervals.update)
 }
 
 let lastExecutedOrder = undefined
 const executeOrder = (store, jar) => {
-	let interval = 5 * 1000
-
 	const state = store.getState()
-	const { 
+	const {
+		userInfo,
 		loggedIn, 
-		user, 
 		village, 
 		lastAction,
 		orders,
@@ -116,24 +113,26 @@ const executeOrder = (store, jar) => {
 		executingOrder,
 		discoverRadius,
 		targets,
-		missions
+		missions,
+		config,
+		params
 	} = state
+	
+	let interval = config.intervals.execute
+	const {user} = userInfo
 
 	if ( loggedIn ){
 		clear()
 		const timestamp = new Date().toGMTString()
 
 		logger.log(`@${user} : ${lastAction} `)
-		console.log("Minimum Troops to attack", config.minTroops)
+		console.log("Minimum Troops to attack", config.minAttack)
+		console.log("Minimum Troops to defend", config.minDefense)
 		console.log("Saving for: " + saveFor )
 		console.log("discoverRadius: " + discoverRadius )
-		/*
-		console.log("Targets: ", targets.map( t => t.id) )
-		console.log("Missions: ", missions.map( m => {
-			const obj = m.objective.action === 'return' ? m.origin : m.objective
-			return obj.id
-		}) )
-		*/
+		console.log("Targets: ", targets.length )
+		console.log("Missions: ", missions.length )
+		console.log("userInfo: ", userInfo )
 		
 		let resources = ''
 		for( r in village.resources ){
@@ -177,7 +176,7 @@ const executeOrder = (store, jar) => {
 				if ( order ) {
 					console.log("New Order: ", order)
 					store.dispatch(actions.newOrder(order))
-					interval = 1
+					//interval = 1
 				}
 			}
 		}
