@@ -2,6 +2,7 @@ const {combineReducers} = require('redux')
 const { 
 	LOGGED_IN,
 	LOGGED_OUT,
+	UPDATE_USER,
 	UPDATE_PARAMS,
 	UPDATE_VILLAGE,
 	REFRESH,
@@ -19,15 +20,15 @@ const {
 } = require('./actions').constants
 
 const userInfo = ( state = {}, { type, payload} ) => {
-	if ( type === LOGGED_IN ){
-		return payload.userInfo
+	switch(type){
+		case LOGGED_IN:
+		case UPDATE_USER:
+			return Object.assign({}, state, payload.userInfo)
+		case LOGGED_IN:
+			return {}
+		default:
+			return state
 	}
-
-	if ( type === LOGGED_OUT ){
-		return {}
-	}
-	
-	return state
 }
 
 const loggedIn = (state = false, { type } ) => {
@@ -198,6 +199,15 @@ const config = ( state = {}, { type, payload }) => {
 	}
 }
 
+const lastRemovedOrder = ( state = {}, { type, payload }) => {
+	switch(type){
+		case REMOVE_ORDER:
+			return Object.assign({}, payload.order)
+		default:
+			return state
+	}
+}
+
 module.exports = combineReducers({
 	userInfo,
 	discoverRadius,
@@ -208,6 +218,7 @@ module.exports = combineReducers({
 	village,
 	orders,
 	executingOrder,
+	lastRemovedOrder,
 	saveFor,
 	tasks,
 	missions,

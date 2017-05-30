@@ -4,6 +4,7 @@ const {
 	spawn,
 	build,
 	upgradeBuilding,
+	upgradeOccupation,
 	trade,
 	attack
 } = require('../api/control')
@@ -29,14 +30,20 @@ module.exports = {
 	
 	spawn(order, store, jar){
 		store.dispatch(actions.saveFor(''))
-		console.log("Spawning ", order.unit)
-		const callback = () => store.dispatch(actions.removeOrder(order))
+		console.log("Spawning ")
+		const callback = () => {
+			store.dispatch(actions.removeOrder(order))
+			console.log("Removing Spawning Order")
+		}
+		
 		const nullCB = () => {}
 		
 		for( let i = 0; i < order.count ; i++ ){
 			let cb = (i == order.count-1) ? callback : nullCB
-			spawn(store, order.unit, order.slot, jar, cb)
+			setTimeout( () => spawn(store, order.unit, order.slot, jar, cb), 50*i )
 		}
+		
+		console.log("Spawning: ", order.unit, order.count)
 	},
 	
 	build(order, store, jar){
@@ -46,7 +53,7 @@ module.exports = {
 			 RemoveOrder (cb2)
 		*/
 		
-		console.log("Building", order.building)
+		console.log("Building")
 		
 		const removeOrderCB = () => store.dispatch(actions.removeOrder(order))
 		
@@ -72,9 +79,12 @@ module.exports = {
 	},
 	
 	trade(order, store, jar){
-		console.log("Trading", order.trade)
+		console.log("Trading")
 		
-		const callback = () => store.dispatch(actions.removeOrder(order))
+		const callback = () => {
+			store.dispatch(actions.removeOrder(order))
+			console.log("Removing Trade Order")
+		}
 		trade(store, order.trade, jar, callback)
 	},
 	
@@ -84,14 +94,31 @@ module.exports = {
 	},
 	
 	attack(order, store, jar){
-		console.log("Executing Mission", order.mission)
-		const callback = () => store.dispatch(actions.removeOrder(order))
+		console.log("Executing Mission")
+		const callback = () => {
+			console.log("Removing Attack Order")
+			store.dispatch(actions.removeOrder(order))
+		}
 		
 		if ( order.extendDiscover ){
 			store.dispatch(actions.extendDiscover())
 		}
 		
 		attack(store, order.mission, jar, callback)
+	},
+	
+	upgradeOccupation(order, store, jar){
+		const removeOrderCB = () => {
+			info.load(
+				store, jar, 'Tasks', 
+				( ) => {
+					store.dispatch(actions.removeOrder(order))
+					console.log("Removing Upgrade Occupation Order")
+				}
+			)
+		}
+		
+		upgradeOccupation(store, jar, order.occupation, removeOrderCB)
 	},
 	
 	upgradeBuilding(order, store, jar){
@@ -101,12 +128,15 @@ module.exports = {
 			 RemoveOrder (cb2)
 		*/
 		
-		console.log("Upgrading Building", order.spec)
+		console.log("Upgrading Building")
 		
 		const removeOrderCB = () => {
 			info.load(
-				store, jar, 'tasks', 
-				( ) => store.dispatch(actions.removeOrder(order))
+				store, jar, 'Tasks', 
+				( ) => {
+					store.dispatch(actions.removeOrder(order))
+					console.log("Removing Upgrade Building Order")
+				}
 			)
 		}
 		

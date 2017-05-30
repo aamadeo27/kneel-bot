@@ -25,6 +25,16 @@ const lib = {
 
 		return n
 	},
+	
+	upgrades: ( occupation, tasks ) => tasks.reduce((ups, slotQueue) => 
+		ups + !slotQueue ? 0 : slotQueue.reduce( (ups_, task) => 
+				ups_ + ( task &&
+								 task.params.job === '_upgradeOccupation' && 
+								 task.params.occupation === occupation ? 1 : 0),
+				0
+		),
+		0
+	),
 
 	stealingCapacity(missions, profiles){
 		return missions.reduce( (total, m) => {

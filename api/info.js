@@ -22,10 +22,33 @@ module.exports = {
 		const action = actions['update' + item]
 
 		request.get( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				console.log(err)
+				if ( callback ) callback()
+				return handler(err, store)
+			}
 
 			body = JSON.parse(body)
 			store.dispatch(action(body))
+			
+			if ( callback ) callback()
+		})
+	},
+	
+	loadUserInfo(store, jar, callback){
+		const { user } = store.getState().userInfo
+		
+		const reqData = {
+			url: urls.users + "/" + user + "/",
+			jar
+		}
+		
+		request.get(reqData, (err, response, body) => {
+			if ( err ) return handler(err, store)
+
+			body = JSON.parse(body)
+
+			store.dispatch(actions.updateUserInfo(body))
 			
 			if ( callback ) callback()
 		})

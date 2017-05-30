@@ -5,7 +5,8 @@ const types = {
 	TRADE: 'trade',
 	SAVE_FOR: 'saveFor',
 	ATTACK: 'attack',
-	UPGRADE_BUILDING: 'upgradeBuilding'
+	UPGRADE_BUILDING: 'upgradeBuilding',
+	UPGRADE_OCCUPATION: 'upgradeOccupation'
 }
 
 const newId = () => new Date().getTime()
@@ -34,6 +35,12 @@ module.exports = {
 		type: types.UPGRADE_BUILDING,
 		id: newId(),
 		spec
+	}),
+	
+	upgradeOccupation: occupation => ({
+		type: types.UPGRADE_OCCUPATION,
+		id: newId(),
+		occupation
 	}),
 	
 	trade: spec => ({

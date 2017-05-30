@@ -34,11 +34,13 @@ module.exports = {
 		}
 		
 		request.put( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
 
 			body = JSON.parse(body)
 			
-			console.log("Calling callback")
 			callback()
 		})
 	},
@@ -50,14 +52,14 @@ module.exports = {
 			form: { name: unit, slot }
 		}
 		
-		console.log(reqData.form)
-		
 		request.post( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
 
 			body = JSON.parse(body)
-			
-			
+			store.dispatch(actions.updateVillage(body))
 			
 			callback()
 		})
@@ -68,10 +70,13 @@ module.exports = {
 		const reqData = { url: urls.build, form: spec, jar }
 		
 		request.post( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
 
 			body = JSON.parse(body)
-			//console.log("BuildResponse", body)
+			store.dispatch(actions.updateVillage(body))
 			
 			callback()
 		})
@@ -81,10 +86,35 @@ module.exports = {
 		const reqData = { url: urls.upgradeBuilding, form: spec, jar }
 		
 		request.post( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
-
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
+			
 			body = JSON.parse(body)
-			console.log("UpgradeResponse", body)
+			store.dispatch(actions.updateVillage(body))
+			
+			callback()
+		})
+	},
+	
+	upgradeOccupation(store, jar, occupation, callback){
+		const reqData = { 
+			url: urls.upgradeOccupation, 
+			form: { occupation, slot: 12},
+			jar 
+		}
+		
+		request.post( reqData, (err, response, body) => {
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
+			
+			body = JSON.parse(body)
+			store.dispatch(actions.updateVillage(body))
+			
+			console.log("UpgradeOccupationResponse", body)
 			
 			callback()
 		})
@@ -102,7 +132,12 @@ module.exports = {
 		}
 		
 		request.post( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
+			
+			store.dispatch(actions.updateVillage(body))
 			
 			callback()
 		})
@@ -121,8 +156,12 @@ module.exports = {
 		}
 		
 		request.post( reqData, (err, response, body) => {
-			if ( err ) return handler(err, store)
+			if ( err ) {
+				callback()
+				return handler(err, store)
+			}
 			
+			handler(body)
 			store.dispatch(actions.updateVillage(body))
 			
 			info.load(store, jar, 'Missions', callback)

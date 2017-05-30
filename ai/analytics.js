@@ -1,3 +1,33 @@
+/*	
+	OccupationTech	-> Peasants => 48
+	
+	Stable => if 
+	
+	Research			  -> {
+		Calvary => 250 pts
+		trade-cart => if Calvary
+		Siege => 300
+		Catapult => Siege
+		Trebuchet => Siege && 600
+	}
+	
+	Other Troops => {
+		Scouts => if Calvary && Infantry / Calvary >= 2.5
+		Archers => not
+		Catapults  => if Catapult
+		Trebuchets => if Trebuchet
+		trade-carts => if trade-cart && trade-carts < 6
+	}
+	
+	Attack Players { 
+		Raid => Troops >= 400 fph
+		SiegeC => 50 Catapults && Troops >= 1000
+		SiegeT => 20 Trebuchets && Troops >= 10000
+	}
+	
+	Fund Villages => 300 pts && 6 trade carts
+*/
+
 const {
 	idleToWork,
 	spawn,
@@ -5,7 +35,8 @@ const {
 	upgradeBuilding,
 	trade,
 	saveForItem,
-	attack
+	attack,
+	upgradeOccupation,
 } = require('./orders')
 
 const config = require('../config')
@@ -22,12 +53,64 @@ const {
 	hasBuilding,
 	slotOf,
 	tradePossible,
-	itsBeingBuilt
+	itsBeingBuilt,
+	upgrades
 } = require('./common')
 
 //An hour in seconds
 const HOUR = 3600
 
+const building = (buildingName, specialCondition, builders = 1) => state => {
+	  const = { village, tasks, missions, params, saveFor, config } = state
+		console.log(`[analysis] Building ${buildingName}`)
+		
+		if ( ! tasks ) return
+		
+		if ( saveFor && saveFor !== buildingName ) return
+		
+
+		if ( itsBeingBuilt(tasks, buildingName) ){
+			return
+		}
+		
+		/**
+		Specific Condition
+			if (! specialCondition(state) ) return
+		**/
+		let looting = stealingCapacity(missions, params.profiles)
+		
+		let cost = Object.assign({}, params.costs[buildingName])
+		const upgrade = hasBuilding(village.buildings, buildingName)
+		let slot = undefined
+		
+		if ( upgrade ){
+			slot = slotOf(village.buildings, 'Barn')
+			const {detail} = village.buildings[slot]
+			const upgrading = detail.nextLevel - detail.level > 1
+
+			// If it's upgrading already
+			if ( upgrading ) return
+			
+			for( r in cost ) {
+				cost[r] *= 
+					Math.pow(params.price.coeficient, detail.nextLevel)
+			}
+			
+		} else {
+			slot = emptySlot(village.buildings)		
+			if ( slot === undefined ) return
+		}
+		
+		if ( ! enoughResources(village.resources, cost) ) {
+			return !saveFor && saveForItem(buildingName)
+		}
+		
+		if ( upgrade ){
+			return upgradeBuilding({ slot, builders })
+		}
+		
+		return build({ name: buildingName, slot })
+}
 
 const analyze ={
 	idle({ village }){
@@ -56,6 +139,8 @@ const analyze ={
 		
 		if ( available < minAttack ) return
 		
+		console.log("Still available troops", { available })
+		
 		missions = missions.map( m => {
 			const missionTarget = m.objective.action == 'return' ? m.origin : m.objective
 			return missionTarget.id
@@ -71,14 +156,13 @@ const analyze ={
 		let mission = undefined
 		const extendDiscover = possibleTargets.length === 1
 		
-		console.log("PossibleTargets: ", possibleTargets.length)
-		
 		let count =  Math.max(
 			minAttack, 
 			parseInt(available/(possibleTargets.length))
 		)
 
 		if ( available - count < minAttack){
+			console.log("Last batch")
 			count = available
 		}
 
@@ -102,6 +186,7 @@ const analyze ={
 		if ( ! tasks ) return
 		
 		if ( saveFor && saveFor !== 'Barn' ) return
+		
 
 		if ( itsBeingBuilt(tasks, 'Barn') ){
 			return
@@ -114,12 +199,9 @@ const analyze ={
 		const { rps, capacity } = village.resources.food
 		let timeLeft = capacity / (rps + looting)
 		
-		// Less than 5hs to go from empty to full
-		console.log({ r: 'food', timeLeft: Math.round(timeLeft/60) + 'mins' })
-		
 		if ( timeLeft > config.barnFillTime ) return
 		
-		let cost = params.costs.Barn
+		let cost = Object.assign({}, params.costs.Barn)
 		const upgrade = hasBuilding(village.buildings, 'Barn')
 		let slot = undefined
 		
@@ -167,7 +249,7 @@ const analyze ={
 		looting /= 4
 		looting /= ( 8 * 3600 )
 		
-		let cost = params.costs.Barn
+		let cost = Object.assign({}, params.costs.Warehouse)
 		const upgrade = hasBuilding(village.buildings, 'Warehouse')
 		
 		for( r in village.resources ){
@@ -177,7 +259,6 @@ const analyze ={
 			let timeLeft = capacity / (rps + looting)
 
 			// Less than 5hs to go from empty to full
-			console.log({ r, timeLeft: Math.round(timeLeft/60) + 'mins', looting })
 			if ( timeLeft > config.warehouseFillTime ) continue
 			
 			if ( upgrade ){
@@ -209,6 +290,85 @@ const analyze ={
 			
 			return build({ name: 'Warehouse', slot })
 		}
+	},
+	
+	occupationTech({ village, missions, params, tasks, saveFor, config }){
+		console.log("--> OccupationTech ?")
+		if ( ! tasks ) return
+		
+		if ( saveFor && saveFor !== 'OccupationTech' ) return
+		
+		const expectedTechLevel = parseInt(peasantsInVillage(village) / config.peasantsPerTechLevel)
+		let occupationToUpgrade = undefined
+		let currentLevel = undefined
+		
+		console.log({ expectedTechLevel })
+		
+		Object.keys(village.occupations).forEach( o => {
+			if ( o === "builders" || o === "unoccupied" ) return
+			if ( occupationToUpgrade ) return
+			
+			currentLevel = village.occupations[o].level + upgrades(o, tasks)
+			console.log({ o, currentLevel })
+			
+			if ( currentLevel < expectedTechLevel ){
+				occupationToUpgrade = o
+			}
+		})
+		
+		if ( ! occupationToUpgrade ) return
+		
+		let cost = Object.assign({}, params.costs[occupationToUpgrade + "Tech"])
+		for( r in cost ) {
+			if ( typeof cost[r] !== 'number' ) continue
+			cost[r] *= 
+				Math.pow(params.price.coeficient, currentLevel+1)
+		}
+		
+		if ( ! enoughResources(village.resources, cost) ) {
+			const spec = tradePossible(cost, village.resources)
+			
+			if ( spec ){
+				console.log("Trading to upgrade occupation",{ spec, cost, currentLevel })
+				return trade(spec)
+			} 
+			
+			return !saveFor && saveForItem('OccupationTech')
+		}
+		
+		return upgradeOccupation(occupationToUpgrade)
+	},
+	
+	university({ points, village, tasks, params, saveFor }){
+		console.log("--> University ?")
+		if ( ! tasks ) return
+
+		if ( saveFor && saveFor !== 'University' ) return
+		
+		if ( hasOrWillHaveBuilding(village.buildings, tasks, 'University') ){
+			return
+		}
+		
+		const cost = params.costs.University
+		
+		const slot = emptySlot(village.buildings)
+		if ( slot === undefined ) return
+		
+		if ( points < 30 ) return
+
+		if ( ! enoughResources(village.resources, cost) ) {
+			const spec = tradePossible(cost, village.resources)
+			
+			if ( spec ){
+				console.log("Trading to build University")
+				return trade(spec)
+			} 
+			
+			console.log("No money for University")
+			return !saveFor && saveForItem('University')
+		}
+		
+		return build({ name: 'University', slot, builders: 4 })
 	},
 	
 	market({ village, params, tasks, saveFor }){

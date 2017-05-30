@@ -1,6 +1,7 @@
 const constants = {
 	LOGGED_IN: 'LOGGED_IN',
 	LOGGED_OUT: 'LOGGED_OUT',
+	UPDATE_USER: 'UPDATE_USER',
 	UPDATE_VILLAGE: 'UPDATE_VILLAGE',
 	PREPARE: 'PREPARE',
 	NEW_ORDER: 'NEW_ORDER',
@@ -19,6 +20,11 @@ const constants = {
 
 module.exports = {
 	constants,
+
+	updateUserInfo: (userInfo) => ({ 
+		type: constants.UPDATE_USER, 
+		payload: { userInfo } 
+	}),
 	
 	loggedIn: (userInfo) => ({ 
 		type: constants.LOGGED_IN, 

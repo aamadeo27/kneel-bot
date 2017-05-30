@@ -92,6 +92,8 @@ const update = (store, jar) => {
 			logger.log('Loading ', d)
 		})
 		
+		info.loadUserInfo(store, jar)
+		
 	} else {
 		logger.log('Loggin in')
 		login(store, jar)
@@ -111,6 +113,7 @@ const executeOrder = (store, jar) => {
 		orders,
 		saveFor,
 		executingOrder,
+		lastRemovedOrder,
 		discoverRadius,
 		targets,
 		missions,
@@ -124,32 +127,38 @@ const executeOrder = (store, jar) => {
 	if ( loggedIn ){
 		clear()
 		const timestamp = new Date().toGMTString()
+		
+		
+		if ( config.verbose ){
+			let resources = ''
+			for( r in village.resources ){
+				let { r0, rps } = village.resources[r]
+				let type = r.substring(0,1)						 
 
-		logger.log(`@${user} : ${lastAction} `)
+				resources += `${Math.round(rps*3600)}${type}ph (${Math.round(r0)}${type}) `
+			}
+
+			let troops = '\nTroops:\n'
+			for( t in village.troops ){
+				let { count } = village.troops[t]			 
+				troops += `\t${count} ${t}\n`
+			}
+			
+			console.log("Villages: ", userInfo.villages )
+			console.log(resources)
+			console.log(troops)
+			console.log("Orders: {\n", orders.map(o => o.type).join(",\n"), "\n}")
+		}
+		
+		console.log("Occupations: ", village.occupations )
 		console.log("Minimum Troops to attack", config.minAttack)
 		console.log("Minimum Troops to defend", config.minDefense)
 		console.log("Saving for: " + saveFor )
 		console.log("discoverRadius: " + discoverRadius )
 		console.log("Targets: ", targets.length )
 		console.log("Missions: ", missions.length )
-		console.log("userInfo: ", userInfo )
-		
-		let resources = ''
-		for( r in village.resources ){
-			let { r0, rps } = village.resources[r]
-			let type = r.substring(0,1)						 
-
-			resources += `${Math.round(rps*3600)}${type}ph (${Math.round(r0)}${type}) `
-		}
-		console.log(resources)
-		
-		let troops = '\nTroops:\n'
-		for( t in village.troops ){
-			let { count } = village.troops[t]			 
-			troops += `\t${count} ${t}\n`
-		}
-		console.log(troops)
-		console.log("Orders: {\n", orders.map(o => o.type).join(",\n"), "\n}")
+		console.log("Points: ", userInfo.points )
+		console.log("dt: ", interval )
 
 		if ( village.village ){
 			if ( orders.length > 0 ) {
@@ -157,12 +166,12 @@ const executeOrder = (store, jar) => {
 				
 				console.log({
 					order: order.id,
-					lastExecutedOrder
+					lastExecutedOrder,
+					lastRemovedOrder
 				})
 				
 				if ( order.id !== lastExecutedOrder ) {
-					logger.log('Executing order:', order)
-					console.log(`+++++ Executing order: ${order.type}`)
+					console.log(`Executing order: ${order.type}`)
 					executors[order.type](order, store, jar)
 					lastExecutedOrder = order.id
 				} else {
@@ -170,7 +179,6 @@ const executeOrder = (store, jar) => {
 				}
 			} else if ( ! executingOrder ) {
 				console.log('+++++ Running analysis')
-				logger.log('State Analysis')
 				const order = analytics.nextOrder(state)
 				
 				if ( order ) {
