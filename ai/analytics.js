@@ -1,7 +1,6 @@
 /*	
-	OccupationTech	-> Peasants => 48
+	Stable => if Calvary
 	
-	Stable => if 
 	
 	Research			  -> {
 		Calvary => 250 pts
@@ -11,6 +10,7 @@
 		Trebuchet => Siege && 600
 	}
 	
+	Improve Troop
 	Other Troops => {
 		Scouts => if Calvary && Infantry / Calvary >= 2.5
 		Archers => not
@@ -54,14 +54,55 @@ const {
 	slotOf,
 	tradePossible,
 	itsBeingBuilt,
+	itsBeingResearched,
 	upgrades
 } = require('./common')
 
 //An hour in seconds
 const HOUR = 3600
 
-const building = (buildingName, specialCondition, builders = 1) => state => {
-	  const = { village, tasks, missions, params, saveFor, config } = state
+const barnCondition = ({ params, missions, village, config }) => {
+		let looting = stealingCapacity(missions, params.profiles)
+		looting /= 4						//Per resource
+		looting /= ( 8 * 3600 ) //Loot Ability per 8hs
+		
+		const { rps, capacity } = village.resources.food
+		let timeLeft = capacity / (rps + looting)
+		
+		return timeLeft > config.barnFillTime
+}
+
+const marketCondition = ({ village }) => {
+		const sum = Object.keys(village.resources).reduce( 
+			(sum,r) => {
+				const { r0, capacity } = village.resources[r]
+				
+				return sum + r0 / capacity
+			}, 0
+		)
+		
+		const avg = sum / 4
+		let variance = 0
+		for( r in village.resources ){
+			let { r0, capacity } = village.resources[r]
+			variance += Math.abs(avg - r0/capacity)
+		}
+		
+		return variance < 0.5
+}
+
+const barracksCondition = ({ points, config, village }) => {
+	const slot = slotOf(village.buildings, 'Barracks')
+	
+	if ( ! slot ) return true
+	
+	const { detail } = village.buildings[slot]
+	
+	return parseInt(points / config.points.barracks) > (detail.nextLevel - 1)
+}
+
+const building = (buildingName, ignoreCondition, builders = 1, allowUpgrade = true) => state => {
+	  const { village, tasks, params, saveFor } = state
 		console.log(`[analysis] Building ${buildingName}`)
 		
 		if ( ! tasks ) return
@@ -73,18 +114,16 @@ const building = (buildingName, specialCondition, builders = 1) => state => {
 			return
 		}
 		
-		/**
-		Specific Condition
-			if (! specialCondition(state) ) return
-		**/
-		let looting = stealingCapacity(missions, params.profiles)
+		if (! ignoreCondition(state) ) return
 		
 		let cost = Object.assign({}, params.costs[buildingName])
 		const upgrade = hasBuilding(village.buildings, buildingName)
 		let slot = undefined
 		
 		if ( upgrade ){
-			slot = slotOf(village.buildings, 'Barn')
+			if ( ! allowUpgrade ) return
+			
+			slot = slotOf(village.buildings, buildingName)
 			const {detail} = village.buildings[slot]
 			const upgrading = detail.nextLevel - detail.level > 1
 
@@ -112,16 +151,36 @@ const building = (buildingName, specialCondition, builders = 1) => state => {
 		return build({ name: buildingName, slot })
 }
 
-const analyze ={
-	idle({ village }){
-		const idle = village.occupations.unoccupied.workers
-
-		console.log("Idle: ", idle)
-
-		if ( idle > 0 )
-			return idleToWork()
-	},
+const research = ( tech, ignoreCondition ) => state => {
+	const { params, config, village, tasks, userInfo: { points } } = state
 	
+	console.log("--> Research " + tech + " ?")
+	if ( params.userTech[tech] ) return
+	if ( itsBeingResearched(tasks, tech) ) return 
+	
+	const cost = params.costs[tech]
+	
+	if ( ignoreCondition && ignoreCondition(state) ) return
+	if ( config.points[tech] && config.points[tech] < points ) return
+	
+	if ( ! enoughResources(village.resources, cost) ) {
+		//return !saveFor && saveForItem(buildingName)
+		console.log("Save For " + tech)
+	}
+
+	return tech
+}
+
+const techConditions = {
+	Calvary: () => true,
+	"Trade Cart Research" : ({ params: { userTech }}) => !!userTech.Calvary,
+	Siege: () => true,
+	"Catapult Research": ({ params: { userTech }}) => !!userTech.Siege,
+	"Trebuchet Research": ({ params: { userTech }}) => !!userTech.Siege
+}
+
+const analyze = {
+
 	attack({ village, params, missions, targets, userInfo, gatherTroops, config }){
 		console.log("--> Attack ?")
 		
@@ -138,8 +197,6 @@ const analyze ={
 		available = available - gatherTroops
 		
 		if ( available < minAttack ) return
-		
-		console.log("Still available troops", { available })
 		
 		missions = missions.map( m => {
 			const missionTarget = m.objective.action == 'return' ? m.origin : m.objective
@@ -180,58 +237,29 @@ const analyze ={
 		
 		return attack(mission, extendDiscover)
 	},
+	
+	idle({ village }){
+		const idle = village.occupations.unoccupied.workers
 
-	barn({ village, tasks, missions, params, saveFor, config }){
-		console.log("--> Barn ?")
-		if ( ! tasks ) return
-		
-		if ( saveFor && saveFor !== 'Barn' ) return
-		
+		console.log("Idle: ", idle)
 
-		if ( itsBeingBuilt(tasks, 'Barn') ){
-			return
-		}
-		
-		let looting = stealingCapacity(missions, params.profiles)
-		looting /= 4						//Per resource
-		looting /= ( 8 * 3600 ) //Loot Ability per 8hs
-		
-		const { rps, capacity } = village.resources.food
-		let timeLeft = capacity / (rps + looting)
-		
-		if ( timeLeft > config.barnFillTime ) return
-		
-		let cost = Object.assign({}, params.costs.Barn)
-		const upgrade = hasBuilding(village.buildings, 'Barn')
-		let slot = undefined
-		
-		if ( upgrade ){
-			slot = slotOf(village.buildings, 'Barn')
-			const {detail} = village.buildings[slot]
-			const upgrading = detail.nextLevel - detail.level > 1
+		if ( idle > 0 )
+			return idleToWork()
+	},
 
-			// If it's upgrading already
-			if ( upgrading ) return
-			
-			for( r in cost ) {
-				cost[r] *= 
-					Math.pow(params.price.coeficient, detail.nextLevel)
-			}
-			
-		} else {
-			slot = emptySlot(village.buildings)		
-			if ( slot === undefined ) return
-		}
+	barn: building('Barn', barnCondition),
+	university: building('University', ({ userInfo: {points} }) => points < 30, 1, false),
+	market: building('Market', marketCondition, 4, false),
+	barracks: building('Barracks', barracksCondition, 6),
+	stable: building('Stable', ({ params : { userTech } }) => userTech.Calvary, 6, false),
+	
+	research(state){
+		let tech = undefined
+		Object.keys(techConditions).forEach(tech => {
+			tech = tech || research(tech, techConditions[tech])(state)
+		})
 		
-		if ( ! enoughResources(village.resources, cost) ) {
-			return !saveFor && saveForItem('Barn')
-		}
-		
-		if ( upgrade ){
-			return upgradeBuilding({ slot, builders: 1 })
-		}
-		
-		return build({ name: 'Barn', slot })
+		console.log("Research " + tech)
 	},
 	
 	warehouse({ village, missions, params, tasks, saveFor, config }){
@@ -339,119 +367,6 @@ const analyze ={
 		return upgradeOccupation(occupationToUpgrade)
 	},
 	
-	university({ points, village, tasks, params, saveFor }){
-		console.log("--> University ?")
-		if ( ! tasks ) return
-
-		if ( saveFor && saveFor !== 'University' ) return
-		
-		if ( hasOrWillHaveBuilding(village.buildings, tasks, 'University') ){
-			return
-		}
-		
-		const cost = params.costs.University
-		
-		const slot = emptySlot(village.buildings)
-		if ( slot === undefined ) return
-		
-		if ( points < 30 ) return
-
-		if ( ! enoughResources(village.resources, cost) ) {
-			const spec = tradePossible(cost, village.resources)
-			
-			if ( spec ){
-				console.log("Trading to build University")
-				return trade(spec)
-			} 
-			
-			console.log("No money for University")
-			return !saveFor && saveForItem('University')
-		}
-		
-		return build({ name: 'University', slot, builders: 4 })
-	},
-	
-	market({ village, params, tasks, saveFor }){
-		console.log("--> Market ?")
-		if ( ! tasks ) return
-
-		if ( saveFor && saveFor !== 'Market' ) return
-		
-		if ( hasOrWillHaveBuilding(village.buildings, tasks, 'Market') ){
-			return
-		}
-		
-		const cost = params.costs.Market
-		
-		const slot = emptySlot(village.buildings)
-		if ( slot === undefined ) return
-		
-		const sum = Object.keys(village.resources).reduce( 
-			(sum,r) => {
-				const { r0, capacity } = village.resources[r]
-				
-				return sum + r0 / capacity
-			}, 0
-		)
-		
-		const avg = sum / 4
-		let variance = 0
-		for( r in village.resources ){
-			let { r0, capacity } = village.resources[r]
-			variance += Math.abs(avg - r0/capacity)
-		}
-		
-		console.log({ variance })
-		if ( variance < 0.5 ) return
-
-		if ( ! enoughResources(village.resources, cost) ) {
-			console.log("No money for Market")
-			return !saveFor && saveForItem('Market')
-		}
-		
-		return build({ name: 'Market', slot, builders: 4 })
-	},
-	
-	barracks({ village, params, tasks, saveFor }){
-		console.log("--> Barracks ?")
-		if ( ! tasks ) return
-		
-		if ( saveFor && saveFor !== 'Barracks' ) return
-
-		if ( hasOrWillHaveBuilding(village.buildings, tasks, 'Barracks') ){
-			return
-		}
-		
-		const slot = emptySlot(village.buildings)
-		if ( slot === undefined ) return
-		
-		const sum = Object.keys(village.resources).reduce( 
-			(sum,r) => {
-				const { rps } = village.resources[r]
-				
-				return sum + rps*3600
-			}, 0
-		)
-		
-		const avg = sum / 4
-		if ( avg < 50 ) return
-		
-		const cost = params.costs.Barracks
-		
-		if ( ! enoughResources(village.resources, cost) ) {
-			const spec = tradePossible(cost, village.resources)
-			
-			if ( spec ){
-				console.log("Trading to build Barracks")
-				return trade(spec)
-			} 
-			
-			return !saveFor && saveForItem('Barracks')
-		}
-		
-		return build({ name: 'Barracks', slot, builders: 6 })
-	},
-	
 	troop({ village, params, missions, saveFor, config }){
 		console.log("--> Troop ?")
 		
@@ -532,10 +447,10 @@ module.exports = {
 
 		let cases = Object.keys(analyze)
 		cases = cases.filter( f => typeof analyze[f] === 'function' )
-		orders = cases.map( f => analyze[f](state) )
-			           .filter( r => r !== undefined )
+		let order = undefined
+		orders = cases.forEach( f => order = order || analyze[f](state) )
 		
-		if ( orders[0] ) return orders[0]
+		return order
 			
 	}
 }

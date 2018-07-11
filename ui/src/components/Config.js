@@ -77,10 +77,13 @@ class ConfigValue extends React.Component {
 
 class Config extends React.Component {
     componentWillMount(){
-        const { updateConfig } = this.props
+        const { updateConfig, updateBotState } = this.props
         
         api.load().then( state => {
             updateConfig(state.config)
+            
+            console.log({ state })
+            updateBotState(state)
         })
     }
 
@@ -124,7 +127,8 @@ class Config extends React.Component {
 
 const mapStateToProps = ({ config }) => ({ config })
 const mapDispatchToProps = dispatch => ({ 
-    updateConfig: config => dispatch(actions.updateConfig(config))
+    updateConfig: config => dispatch(actions.updateConfig(config)),
+    updateBotState: botState => dispatch(actions.updateBotState(botState))
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Config)

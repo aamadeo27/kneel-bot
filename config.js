@@ -8,7 +8,7 @@ const hoursToSec = h => h * 3600
 module.exports = {
 	server: 'https://s1.aamadeo.me',
 	login: {
-		user: 'u1', 
+		user: 'u12', 
 		pass: 'u'
 	},
 	minDiscoverRadius: 0,
@@ -20,10 +20,16 @@ module.exports = {
 	intervals: {
 		discovery: secondsToMs(10),
 		update: secondsToMs(10),
-		execute: secondsToMs(10)
+		execute: secondsToMs(3)
 	},
 	warehouseFillTime: hoursToSec(5),
 	barnFillTime: hoursToSec(5),
 	verbose: true,
-	pause: false
+	pause: false,
+	points: {
+		barracks: 150,
+		Calvary: 150,
+		Siege: 300,
+		Trebuchet: 600
+	}
 }

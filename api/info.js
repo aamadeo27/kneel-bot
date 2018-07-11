@@ -28,8 +28,12 @@ module.exports = {
 				return handler(err, store)
 			}
 
-			body = JSON.parse(body)
-			store.dispatch(action(body))
+			try {
+				body = JSON.parse(body)
+				store.dispatch(action(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			if ( callback ) callback()
 		})
@@ -45,10 +49,13 @@ module.exports = {
 		
 		request.get(reqData, (err, response, body) => {
 			if ( err ) return handler(err, store)
-
-			body = JSON.parse(body)
-
-			store.dispatch(actions.updateUserInfo(body))
+			
+			try {
+				body = JSON.parse(body)
+				store.dispatch(actions.updateUserInfo(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			if ( callback ) callback()
 		})
@@ -80,9 +87,12 @@ module.exports = {
 					request.get( reqData, (err, response, body) => {
 						if ( err ) return handler(err, store)
 
-						body = JSON.parse(body)
-
-						store.dispatch(actions.updateMap(body))
+						try {
+							body = JSON.parse(body)
+							store.dispatch(actions.updateUserInfo(body))
+						} catch(err){
+							handler(body, store)
+						}
 					})
 			}
 		}

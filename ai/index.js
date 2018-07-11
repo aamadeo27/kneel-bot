@@ -171,7 +171,7 @@ const executeOrder = (store, jar) => {
 				})
 				
 				if ( order.id !== lastExecutedOrder ) {
-					console.log(`Executing order: ${order.type}`)
+					console.log("Executing order:", order)
 					executors[order.type](order, store, jar)
 					lastExecutedOrder = order.id
 				} else {

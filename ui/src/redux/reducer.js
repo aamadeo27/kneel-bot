@@ -11,6 +11,17 @@ const config = ( state = {}, { type, payload }) => {
     }    
 }
 
+const botState = ( state = {}, { type, payload }) => {
+    switch(type){
+        case actions.UPDATE_BOT_STATE:
+        return payload.botState
+
+        default:
+        return state
+    }    
+}
+
 export default combineReducers({
-    config
+    config,
+    botState
 })

@@ -117,6 +117,16 @@ const lib = {
 						false
 				),
 				false
+			),
+	itsBeingResearched: (tasks, name) => tasks.length > 0 && 
+			tasks.reduce(	(ibr, slotQueue) => 
+				ibr || slotQueue && slotQueue.reduce( (ibr_, task) => 
+						ibr_ || ( task &&
+				              task.params.job === 'enableTech' && 
+											task.params.technology === name ),
+						false
+				),
+				false
 			)
 }
 

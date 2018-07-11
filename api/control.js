@@ -58,8 +58,12 @@ module.exports = {
 				return handler(err, store)
 			}
 
-			body = JSON.parse(body)
-			store.dispatch(actions.updateVillage(body))
+			try {
+				body = JSON.parse(body)
+				store.dispatch(actions.updateVillage(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			callback()
 		})
@@ -75,8 +79,12 @@ module.exports = {
 				return handler(err, store)
 			}
 
-			body = JSON.parse(body)
-			store.dispatch(actions.updateVillage(body))
+			try {
+				body = JSON.parse(body)
+				store.dispatch(actions.updateVillage(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			callback()
 		})
@@ -91,8 +99,12 @@ module.exports = {
 				return handler(err, store)
 			}
 			
-			body = JSON.parse(body)
-			store.dispatch(actions.updateVillage(body))
+			try {
+				body = JSON.parse(body)
+				store.dispatch(actions.updateVillage(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			callback()
 		})
@@ -111,8 +123,12 @@ module.exports = {
 				return handler(err, store)
 			}
 			
-			body = JSON.parse(body)
-			store.dispatch(actions.updateVillage(body))
+			try {
+				body = JSON.parse(body)
+				store.dispatch(actions.updateVillage(body))
+			} catch(err){
+				handler(body, store)
+			}
 			
 			console.log("UpgradeOccupationResponse", body)
 			
